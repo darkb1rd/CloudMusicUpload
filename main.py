@@ -8,7 +8,12 @@ from pyncm import GetCurrentSession, LoadSessionFromString
 from pyncm.apis.cloud import SetPublishCloudResource, SetUploadCloudInfo, SetUploadObject, GetNosToken, GetCheckCloudUpload
 import time
 from termcolor import colored, cprint
-
+from pyncm.apis.login import (
+            GetCurrentLoginStatus,
+            WriteLoginInfo,
+            LoginQrcodeUnikey,
+            LoginQrcodeCheck,
+        )
 SESSION_FILE = ".cloud.key"
 
 
@@ -49,11 +54,13 @@ def login():
                     yield ''.join(s)
 
         dot = dot_thingy()
-        uuid = pyncm.login.LoginQrcodeUnikey()['unikey']
+
+        # uuid = pyncm.login.LoginQrcodeUnikey()['unikey']
+        uuid = LoginQrcodeUnikey()["unikey"]
         url = f'https://music.163.com/login?codekey={uuid}'
         print_qrcode(url)
         while True:
-            rsp = pyncm.login.LoginQrcodeCheck(uuid)
+            rsp = LoginQrcodeCheck(uuid)
             if rsp['code'] == 803 or rsp['code'] == 800: break
             message = f"[!] 等待登录, 状态：{rsp['code']} -- {rsp['message']}"
             print(message, next(dot), end='\r')
@@ -62,7 +69,7 @@ def login():
     except:
         cprint("[-] 登陆凭证已失效, 请重新登录!", 'red')
         os.remove(SESSION_FILE)
-    if pyncm.login.GetCurrentLoginStatus()['code'] == 200:
+    if GetCurrentLoginStatus()['code'] == 200:
         with open(SESSION_FILE, 'w+') as K:
             K.write(pyncm.DumpSessionAsString(GetCurrentSession()))
         print('[+] 成功登录并保存了登录信息: [ ID: %s,  昵称: %s , 签名: %s , 最后登录IP: %s ]'%(
